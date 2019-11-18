@@ -39,8 +39,12 @@ func NewRTUFrame(packet []byte) (*RTUFrame, error) {
 
 // Copy the RTUFrame.
 func (frame *RTUFrame) Copy() Framer {
-	copy := *frame
-	return &copy
+	frameCopy := *frame
+	return &frameCopy
+}
+
+func (frame *RTUFrame) GetAddress() uint8 {
+	return frame.Address
 }
 
 // Bytes returns the Modbus byte stream based on the RTUFrame fields

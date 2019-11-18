@@ -41,8 +41,12 @@ func NewTCPFrame(packet []byte) (*TCPFrame, error) {
 
 // Copy the TCPFrame.
 func (frame *TCPFrame) Copy() Framer {
-	copy := *frame
-	return &copy
+	frameCopy := *frame
+	return &frameCopy
+}
+
+func (frame *TCPFrame) GetAddress() uint8 {
+	return frame.Device
 }
 
 // Bytes returns the Modbus byte stream based on the TCPFrame fields
