@@ -8,6 +8,11 @@ import (
 	"github.com/goburrow/serial"
 )
 
+type functionCallback struct {
+	funcCode uint8
+	function func(Framer)
+}
+
 // Server is a Modbus slave with allocated memory for discrete inputs, coils, etc.
 type Server struct {
 	// Debug enables more verbose messaging.
@@ -15,11 +20,12 @@ type Server struct {
 	listeners        []net.Listener
 	ports            []serial.Port
 	requestChan      chan *Request
-	function         [256](func(*Server, Framer) ([]byte, *Exception))
+	function         [256]func(*Server, Framer) ([]byte, *Exception)
 	DiscreteInputs   []byte
 	Coils            []byte
 	HoldingRegisters []uint16
 	InputRegisters   []uint16
+	callbacks        []functionCallback
 }
 
 // Request contains the connection and Modbus frame.
@@ -54,6 +60,13 @@ func NewServer() *Server {
 	return s
 }
 
+func (s *Server) RegisterFunctionCallback(funcCode uint8, function func(Framer)) {
+	s.callbacks = append(s.callbacks, functionCallback{
+		funcCode: funcCode,
+		function: function,
+	})
+}
+
 // RegisterFunctionHandler override the default behavior for a given Modbus function.
 func (s *Server) RegisterFunctionHandler(funcCode uint8, function func(*Server, Framer) ([]byte, *Exception)) {
 	s.function[funcCode] = function
@@ -71,6 +84,12 @@ func (s *Server) handle(request *Request) Framer {
 		response.SetData(data)
 	} else {
 		exception = &IllegalFunction
+	}
+
+	for _, element := range s.callbacks {
+		if function == element.funcCode {
+			element.function(request.frame)
+		}
 	}
 
 	if exception != &Success {
