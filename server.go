@@ -2,10 +2,9 @@
 package mbserver
 
 import (
+	"go.bug.st/serial.v1"
 	"io"
 	"net"
-
-	"github.com/goburrow/serial"
 )
 
 type functionCallback struct {
